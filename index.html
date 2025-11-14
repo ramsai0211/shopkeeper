@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shopkeeper Panel | Robo Delivery </title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      background: linear-gradient(135deg,#1e36be 0,#0fffc0 99%);
+      min-height:100vh;margin:0;
+      font-family:'Segoe UI',Arial;
+      background-attachment:fixed;
+      color:#fff;
+    }
+    .header {
+      background:linear-gradient(120deg,#210cbc 65%,#0fffc0 120%);
+      color:#fff; padding:38px 0 22px 0;font-size:2.4em;letter-spacing:.045em;text-align:center;
+      font-weight:900; border-bottom-left-radius: 38px; border-bottom-right-radius:38px; 
+      text-shadow:0 11px 30px #2fffff88,0 2px 0 #0ff5cb;
+      box-shadow:0 14px 66px #30fff582;
+      display: flex; flex-direction:column; align-items: center; 
+    }
+    .panel {max-width:500px;margin:22px auto;background:rgba(14,44,94,0.82);padding:22px 20px;border-radius:22px;box-shadow:0 8px 44px #0fffff80;}
+    .orders { margin-top: 0;}
+    .order-card {
+      background:linear-gradient(90deg,#f8ffff 14%,#b5ffff 100%);
+      color:#23235a;
+      border-radius:14px;
+      box-shadow:0 4px 25px #0fffa865;
+      padding:15px 18px 17px 18px;
+      margin-bottom:14px;
+      position:relative;
+      font-size:1.11em;
+      font-weight:700;
+    }
+    .order-status {font-size:1.15em;font-weight:800;padding:2px 10px;background:#0fffc0;color:#1e36be;border-radius:9px;display:inline-block;}
+    .order-btns {display:flex;gap:12px;margin-top:15px;}
+    .btn {
+      background: linear-gradient(90deg,#1e36be 70%,#0fffc0 100%);
+      color:#fff;font-weight:900;border:none;
+      border-radius:15px;
+      font-size:1.08em;padding: 12px 26px;
+      cursor:pointer;
+      box-shadow:0 2px 15px #13ffe3c4;
+      transition:0.1s;
+    }
+    .btn:active {background:linear-gradient(90deg,#0fffc0 20%,#1e36be 100%);}
+    .order-info {margin-bottom:7px;}
+    @media(max-width:600px) {.panel{max-width:96vw;}.order-card{font-size:0.98em;}}
+  </style>
+</head>
+<body>
+  <div class="header">Shopkeeper Panel 🚚 <span style="color:#ffd166;">Robo Delivery </span></div>
+  <div class="panel">
+    <h2 style="text-align:center;">Orders</h2>
+    <div class="orders" id="orders"></div>
+  </div>
+  <script>
+const API = "https://robo-delivery-backend-production.up.railway.app"; // <- your backend URL
+function fetchOrders() {
+  fetch(API + "/orders")
+   .then(r=>r.json())
+   .then(arr=>{
+     let html = "";
+     arr.forEach(o=>{
+      html += `<div class="order-card">
+        <div class="order-info"><b>${o.name||"No Name"}</b> | <span>${o.location||"No Location"}</span></div>
+        <div class="order-info">${o.item||""}</div>
+        <span class="order-status">${o.status||"Unknown"}</span>
+        <div class="order-btns">
+          <button class="btn" onclick="openBox('${o.id}')">Open Box</button>
+          <button class="btn" onclick="closeBox('${o.id}')">Close Box</button>
+          <button class="btn" onclick="dispatch('${o.id}')">Dispatch</button>
+        </div>
+      </div>`;
+     });
+     orders.innerHTML = html;
+   });
+}
+function openBox(id) {
+  fetch(API + "/orders/"+id+"/open-box",{method:"POST"}).then(()=>fetchOrders());
+}
+function closeBox(id) {
+  fetch(API + "/orders/"+id+"/close-box",{method:"POST"}).then(()=>fetchOrders());
+}
+function dispatch(id) {
+  fetch(API + "/orders/"+id+"/dispatch",{method:"POST"}).then(()=>fetchOrders());
+}
+fetchOrders();
+setInterval(fetchOrders, 2000);
+  </script>
+</body>
+</html>
