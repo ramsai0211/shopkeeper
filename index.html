@@ -1,92 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Shopkeeper Panel | Robo Delivery </title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8">
+  <title>Shopkeeper Dashboard - RoboGrocery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      background: linear-gradient(135deg,#1e36be 0,#0fffc0 99%);
-      min-height:100vh;margin:0;
-      font-family:'Segoe UI',Arial;
-      background-attachment:fixed;
-      color:#fff;
-    }
-    .header {
-      background:linear-gradient(120deg,#210cbc 65%,#0fffc0 120%);
-      color:#fff; padding:38px 0 22px 0;font-size:2.4em;letter-spacing:.045em;text-align:center;
-      font-weight:900; border-bottom-left-radius: 38px; border-bottom-right-radius:38px; 
-      text-shadow:0 11px 30px #2fffff88,0 2px 0 #0ff5cb;
-      box-shadow:0 14px 66px #30fff582;
-      display: flex; flex-direction:column; align-items: center; 
-    }
-    .panel {max-width:500px;margin:22px auto;background:rgba(14,44,94,0.82);padding:22px 20px;border-radius:22px;box-shadow:0 8px 44px #0fffff80;}
-    .orders { margin-top: 0;}
-    .order-card {
-      background:linear-gradient(90deg,#f8ffff 14%,#b5ffff 100%);
-      color:#23235a;
-      border-radius:14px;
-      box-shadow:0 4px 25px #0fffa865;
-      padding:15px 18px 17px 18px;
-      margin-bottom:14px;
-      position:relative;
-      font-size:1.11em;
-      font-weight:700;
-    }
-    .order-status {font-size:1.15em;font-weight:800;padding:2px 10px;background:#0fffc0;color:#1e36be;border-radius:9px;display:inline-block;}
-    .order-btns {display:flex;gap:12px;margin-top:15px;}
-    .btn {
-      background: linear-gradient(90deg,#1e36be 70%,#0fffc0 100%);
-      color:#fff;font-weight:900;border:none;
-      border-radius:15px;
-      font-size:1.08em;padding: 12px 26px;
-      cursor:pointer;
-      box-shadow:0 2px 15px #13ffe3c4;
-      transition:0.1s;
-    }
-    .btn:active {background:linear-gradient(90deg,#0fffc0 20%,#1e36be 100%);}
-    .order-info {margin-bottom:7px;}
-    @media(max-width:600px) {.panel{max-width:96vw;}.order-card{font-size:0.98em;}}
+    body { background: linear-gradient(120deg, #ffecd2 0%, #fcb69f 100%); font-family: 'Segoe UI', Arial, sans-serif; margin:0; min-height:100vh;}
+    .container { max-width: 470px; background: #fff6ed; margin: 2em auto; border-radius: 16px; box-shadow: 0 3px 18px #0002; padding: 2em 1.1em;}
+    h1 { text-align: center; color: #cf7d32; font-size:2rem; letter-spacing:1px; margin-bottom:0.5em;}
+    .order-block { background:#fffbe6; border-radius:13px; box-shadow:0 1px 7px #fdb580a1; margin-bottom:16px; padding:19px 13px;}
+    .label { color:#d07315; font-weight:600;}
+    .status-box { margin: 9px 0 6px 0; padding: 1.1em; border-radius: 11px; font-size:1.13em; background: #e6f2fc; color: #26405c; box-shadow: 0 1px 6px #e0eafc;}
+    .progress-bar {margin:19px 0 8px 0;display:flex;justify-content:space-between;}
+    .progress-step {font-size:1.08em;border-radius: 9px;padding:7px 10px;background:#ffd48c;color:#947200;font-weight:600;}
+    .progress-step.active {background:#f19644;color:#fff;}
+    .progress-step.done {background:#bbefbe;color:#213c29;}
+    .shop-btns {margin-top:18px;}
+    .shop-btns button { background: #21bf73; color:#fff; font-size:1.13em; border:none; border-radius:8px; padding:12px 20px; margin:7px 8px 0 0; box-shadow:0 1px 8px #cbe7c0e1; font-weight:600; transition: background 0.16s;}
+    .shop-btns button:disabled { background: #c2c2c2; color:#555;}
+    .shop-btns button:active { background: #28da85;}
+    @media (max-width:500px){.container{border-radius:0; padding: 10px 4px; box-shadow:none;}}
   </style>
 </head>
 <body>
-  <div class="header">Shopkeeper Panel 🚚 <span style="color:#ffd166;">Robo Delivery </span></div>
-  <div class="panel">
-    <h2 style="text-align:center;">Orders</h2>
-    <div class="orders" id="orders"></div>
+  <div class="container">
+    <h1>Shopkeeper Panel 🏪</h1>
+    <div id="order-block" class="order-block" style="display:none;"></div>
+    <div id="progress"></div>
+    <div id="status"></div>
+    <div class="shop-btns">
+      <button id="unlockBtn" onclick="unlockBox()">Unlock Box</button>
+      <button id="lockBtn" onclick="lockBox()">Lock Box</button>
+      <button id="dispatchBtn" onclick="dispatch()" style="background:#f7971e">Dispatch Robot</button>
+    </div>
   </div>
   <script>
-const API = "https://robo-delivery-backend-production.up.railway.app"; // <- your backend URL
-function fetchOrders() {
-  fetch(API + "/orders")
-   .then(r=>r.json())
-   .then(arr=>{
-     let html = "";
-     arr.forEach(o=>{
-      html += `<div class="order-card">
-        <div class="order-info"><b>${o.name||"No Name"}</b> | <span>${o.location||"No Location"}</span></div>
-        <div class="order-info">${o.item||""}</div>
-        <span class="order-status">${o.status||"Unknown"}</span>
-        <div class="order-btns">
-          <button class="btn" onclick="openBox('${o.id}')">Open Box</button>
-          <button class="btn" onclick="closeBox('${o.id}')">Close Box</button>
-          <button class="btn" onclick="dispatch('${o.id}')">Dispatch</button>
-        </div>
-      </div>`;
-     });
-     orders.innerHTML = html;
-   });
-}
-function openBox(id) {
-  fetch(API + "/orders/"+id+"/open-box",{method:"POST"}).then(()=>fetchOrders());
-}
-function closeBox(id) {
-  fetch(API + "/orders/"+id+"/close-box",{method:"POST"}).then(()=>fetchOrders());
-}
-function dispatch(id) {
-  fetch(API + "/orders/"+id+"/dispatch",{method:"POST"}).then(()=>fetchOrders());
-}
-fetchOrders();
-setInterval(fetchOrders, 2000);
+    const API = 'https://robo-backend-production-34af.up.railway.app/api';
+
+    function showOrderBlock(data) {
+      let html = '';
+      if (data.customer_name && data.order_items && data.order_items.length) {
+        html += `<div class="label">Customer:</div> ${data.customer_name}<br>`;
+        html += `<div class="label">Location:</div> ${data.fake_location}<br>`;
+        html += `<div class="label">Items:</div><ul>`;
+        data.order_items.forEach(item => { html += `<li>${item}</li>`; });
+        html += `</ul>`;
+      }
+      document.getElementById('order-block').innerHTML = html;
+      document.getElementById('order-block').style.display = (data.customer_name && data.order_items && data.order_items.length) ? "block" : "none";
+    }
+
+    // Progress steps
+    const steps = [
+      {code: "ORDERED", label:"Packing"},
+      {code: "DISPATCHED", label:"Robo Arriving"},
+      {code: "WAIT_PASSWORD", label:"At customer's door"},
+      {code: "WAIT_OTP", label:"Customer entering OTP"},
+      {code: "DELIVERED", label:"Delivered"}
+    ];
+    function renderProgress(current) {
+      let pHtml = '<div class="progress-bar">';
+      steps.forEach((step, idx) => {
+        let c = current === step.code ? 'active': steps.findIndex(s=>s.code===current) > idx ? 'done': '';
+        pHtml += `<span class="progress-step ${c}">${step.label}</span>`;
+      });
+      pHtml += '</div>';
+      document.getElementById("progress").innerHTML = pHtml;
+    }
+
+    function getStatus() {
+      fetch(API + "/status").then(res=>res.json()).then(d=>{
+        showOrderBlock(d);
+        renderProgress(d.status_code||"ORDERED");
+        document.getElementById("status").innerHTML = `<div class="status-box">${d.status_message}</div>`;
+
+        // Lock/unlock button logic
+        document.getElementById('unlockBtn').disabled = !d.boxLocked || d.status_code === "DISPATCHED" || d.status_code === "WAIT_PASSWORD" || d.status_code === "WAIT_OTP" || d.status_code === "DELIVERED";
+        document.getElementById('lockBtn').disabled = d.boxLocked || d.status_code === "DISPATCHED" || d.status_code === "WAIT_PASSWORD" || d.status_code === "WAIT_OTP" || d.status_code === "DELIVERED";
+        // Only allow dispatch where it's valid
+        document.getElementById('dispatchBtn').disabled = !(d.status_code === "ORDERED" && d.boxLocked);
+
+      });
+    }
+    setInterval(getStatus, 1200);
+    getStatus();
+
+    function unlockBox() {
+      fetch(API + "/unlockBox", { method: "POST" }).then(() => setTimeout(getStatus, 400));
+    }
+    function lockBox() {
+      fetch(API + "/lockBox", { method: "POST" }).then(() => setTimeout(getStatus, 400));
+    }
+    function dispatch() {
+      fetch(API + "/dispatch", { method: "POST" }).then(() => setTimeout(getStatus, 400));
+    }
   </script>
 </body>
 </html>
